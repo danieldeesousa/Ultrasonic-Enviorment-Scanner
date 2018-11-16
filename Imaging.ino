@@ -4,9 +4,11 @@
 #define DIRECTION 4
 #define STEP_RESOLUTION 1
 #define TOTAL_STEPS 400 // 360 degrees / (0.9 degrees / step)
+#define NUM_SENSOR_READINGS 10
 
-long sensor, anVolt, mm, pwm, av;
- 
+long sensor, analog, pwm, av;
+char input;
+
 void setup() 
 {
   Serial.begin(9600);
@@ -17,31 +19,27 @@ void setup()
   
   // Sensor PWM input
   pinMode(6, INPUT); 
-}
 
-void readSensor()
-{
-  av = 0; // average distance in mm
-  
-  // Take readings from both analog and PWM interface
-  for(int i = 0; i < 10; i++)
-  {
-    anVolt = analogRead(0);
-    mm = anVolt*5; // 10 bit ADC conversion
-    pwm = pulseIn(6, HIGH)/10;
-    av += (pwm);
-    delay(10);
-  }  
-
-  // Average results and print result
-  av = av/10;
-  if(av < 500)
-  {
-    Serial.println(av);
-  }
+  // Delay at startup
+  delay(5000);
 }
 
 void loop() 
+{
+   // Check for Bluetooth data on USART bus
+   if(Serial.available() > 0)
+   {
+      input = Serial.read();
+      switch (input)
+      {
+        case 'S':
+          fullScan();
+          break;
+      }
+   }
+}
+
+void fullScan()
 {
   // Read 360 degrees of enviorment
   digitalWrite(DIRECTION, DIRECTION_CCW);
@@ -56,6 +54,29 @@ void loop()
   digitalWrite(DIRECTION, DIRECTION_CW);
   turnMotor(TOTAL_STEPS);
   delay(1000);
+}
+
+void readSensor()
+{
+  av = 0; // average distance in mm
+  
+  // Take readings from both analog and PWM interface
+  for(int i = 0; i < NUM_SENSOR_READINGS; i++)
+  {
+    analog = analogRead(0)*5; // 10 bit ADC conversion
+    pwm = pulseIn(6, HIGH)/10;
+    av += (pwm);
+    delay(10);
+  }  
+
+  // Average results and print result
+  av = av/NUM_SENSOR_READINGS;
+  int sendVal;
+  if(av < 500)
+  {
+    sendVal = int(av);
+    Serial.println(sendVal);
+  }
 }
 
 void turnMotor(int steps)
