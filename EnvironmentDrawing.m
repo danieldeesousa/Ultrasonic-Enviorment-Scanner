@@ -1,10 +1,13 @@
+data = collect_data()
 % importing data collected by sensor
-file = importdata('data3.txt');
-inv_file = file.';
+% file = importdata('data3.txt');
+% inv_file = file.';
+inv_file = data;
+inv_file(inv_file==0) = [];
 
 % plateau identification code (finding the walls)
 i = 1;
-threshold = 7;
+threshold = 4;
 % for angle correction to radians
 angle = 0.9*pi/180;
 % each row of side_distance stores the distance of two midpoints of wall
@@ -69,13 +72,11 @@ for i = 1: length(side_eqns)
 end
 
 % plotting each of the lines and where they intersect
+figure
 for i = 1: length(poi)
     x_range = poi(i,1):poi(i,2);
     y_range = side_eqns(i,1)*x_range + side_eqns(i,2);
     plot(x_range, y_range);
     hold on
 end
-
-
-
     
