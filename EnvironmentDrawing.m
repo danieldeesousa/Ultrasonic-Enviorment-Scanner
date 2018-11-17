@@ -1,5 +1,5 @@
 % importing data collected by sensor
-file = importdata('data.txt');
+file = importdata('data3.txt');
 inv_file = file.';
 
 % plateau identification code (finding the walls)
@@ -28,7 +28,8 @@ while i < length(differences)
             midpoint_1 = midpoint - 1;
             side_distance = [side_distance; [inv_file(i+floor(count/2)) inv_file(i-1+floor(count/2))]];
             side_angle = [side_angle; [angle*midpoint_1 angle*midpoint]];
-            % side_angle = [side_angle; [angle*i angle*(i+2)]];
+            % side_angle = [side_angle; [angle*(i+count)*.85 angle*(i+(count+1)*.85)]];
+            % side_angle = [side_angle; [angle*i angle*(i+1)]];
         end
     end
     i = i + count + 1;
@@ -69,8 +70,8 @@ end
 
 % plotting each of the lines and where they intersect
 for i = 1: length(poi)
-    x_range = poi(i,1):poi(i,2)
-    y_range = side_eqns(i,1)*x_range + side_eqns(i,2)
+    x_range = poi(i,1):poi(i,2);
+    y_range = side_eqns(i,1)*x_range + side_eqns(i,2);
     plot(x_range, y_range);
     hold on
 end
