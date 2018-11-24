@@ -1,38 +1,65 @@
-data = collect_data()
 % importing data collected by sensor
-% file = importdata('data3.txt');
-% inv_file = file.';
-inv_file = data;
-inv_file(inv_file==0) = [];
+
+% data = collect_data()
+% inv_file = data;
+% inv_file(inv_file==0) = [];
+
+max_diff = 5;
+data = importdata('pretty_accurate.txt');
+new_data = data;
+for i=1:length(new_data)-1
+    value_1 = new_data(i);
+    value_2 = new_data(i+1);
+    
+    d = abs(value_1-value_2);
+    if d > max_diff
+        for j=1:20
+            if j+i < length(new_data) && abs(new_data(i+j)-value_1) < max_diff 
+                new_data(i+1) = new_data(i);
+                break
+            end
+        end
+    end
+end
+
+inv_file = new_data;
+
+% inv_file = medfilt1(inv_file,3);
 
 % plateau identification code (finding the walls)
 i = 1;
-threshold = 4;
+threshold = 10;
 % for angle correction to radians
 angle = 0.9*pi/180;
 % each row of side_distance stores the distance of two midpoints of wall
 % each row of side_angle stores the angle of two midpoints of wall
 side_distance = [];
 side_angle = [];
+starts = [];
+midpoints = [];
+ends = [];
 % look at difference between each value of distance
 differences = diff(inv_file);
 
 while i < length(differences)
     count = 0;
-    if differences(i) < threshold        
+    if abs(differences(i)) < threshold        
         count = count + 1;
         for j=i:length(differences)
-            if differences(i + count) <= threshold && (count + i) < length(differences) 
+            if abs(differences(i + count)) <= threshold && (count + i) < length(differences) 
                 count = count + 1;
             end
         end
-        if count > 32
+        if count > 35
             midpoint = i + floor((count+1)/2);
             midpoint_1 = midpoint - 1;
-            side_distance = [side_distance; [inv_file(i+floor(count/2)) inv_file(i-1+floor(count/2))]];
+            side_distance = [side_distance; [inv_file(midpoint+1) inv_file(midpoint)]];
             side_angle = [side_angle; [angle*midpoint_1 angle*midpoint]];
             % side_angle = [side_angle; [angle*(i+count)*.85 angle*(i+(count+1)*.85)]];
-            % side_angle = [side_angle; [angle*i angle*(i+1)]];
+            % side_angle = [side_angle; [angle*i angle*(i+count)]];
+            midpoints = [midpoints; midpoint];
+            starts = [starts; i+1];
+            ends = [ends; i+count+1];
         end
     end
     i = i + count + 1;
@@ -79,4 +106,18 @@ for i = 1: length(poi)
     plot(x_range, y_range);
     hold on
 end
-    
+plot(0,0,'r*')
+text(5,5,'Transducer')
+xlabel('Distance (mm)')
+ylabel('Distance (mm)')
+
+figure
+hold on
+plot(inv_file)
+for i=1:length(midpoints)
+    plot(midpoints(i), inv_file(midpoints(i)), 'ro')
+    plot(starts(i), inv_file(starts(i)), 'go')
+    plot(ends(i), inv_file(ends(i)), 'bo')
+end
+xlabel('Steps of Rotation (0.9 degrees/step)')
+ylabel('Distance (mm)')
